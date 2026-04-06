@@ -13,6 +13,12 @@ const UNSAFE_PATTERNS = [
   /method(s)? (of|to) (suicide|self.harm)/i,
 ];
 
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const MAX_REQUESTS_PER_WINDOW = 30;
+const CRISIS_COOLDOWN_MS = 5 * 60_000;
+const OPENAI_MAX_TOKENS = 500;
+const OPENAI_TEMPERATURE = 0.7;
+
 function filterUnsafeContent(text: string): { safe: boolean; filtered: string } {
   for (const pattern of UNSAFE_PATTERNS) {
     if (pattern.test(text)) {
@@ -34,11 +40,11 @@ function checkRateLimit(userId: string): boolean {
   const limit = rateLimitMap.get(userId);
 
   if (!limit || now > limit.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + 60_000 });
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
 
-  if (limit.count >= 30) {
+  if (limit.count >= MAX_REQUESTS_PER_WINDOW) {
     return false;
   }
 
@@ -59,8 +65,8 @@ async function callOpenAI(
         { role: 'system', content: systemPrompt },
         ...messages,
       ],
-      max_tokens: 500,
-      temperature: 0.7,
+      max_tokens: OPENAI_MAX_TOKENS,
+      temperature: OPENAI_TEMPERATURE,
     });
     return response.choices[0]?.message?.content ?? 'I\'m here to support you.';
   } catch (error) {
@@ -79,7 +85,7 @@ const crisisCooldownMap = new Map<string, number>();
 function shouldTriggerCrisis(userId: string): boolean {
   const now = Date.now();
   const lastCrisis = crisisCooldownMap.get(userId);
-  if (!lastCrisis || now - lastCrisis > 5 * 60_000) {
+  if (!lastCrisis || now - lastCrisis > CRISIS_COOLDOWN_MS) {
     return true;
   }
   return false;
