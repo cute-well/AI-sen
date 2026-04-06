@@ -5,11 +5,12 @@ import { handleApiError } from '@/utils/errorHandler';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const chat = await Chat.findById(params.id).lean();
+    const { id } = await params;
+    const chat = await Chat.findById(id).lean();
 
     if (!chat) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
@@ -23,11 +24,12 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const chat = await Chat.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const chat = await Chat.findByIdAndDelete(id);
 
     if (!chat) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
