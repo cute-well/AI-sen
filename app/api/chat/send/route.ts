@@ -61,7 +61,10 @@ async function callOpenAI(
 ): Promise<string> {
   try {
     const response = await client.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      // gpt-3.5-turbo provides fast, cost-effective responses suitable for
+      // real-time chat. Override via OPENAI_MODEL env var to use gpt-4/gpt-4-turbo
+      // for higher-quality responses if needed.
+      model: process.env.OPENAI_MODEL ?? 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages,
