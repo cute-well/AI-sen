@@ -18,6 +18,7 @@ const MAX_REQUESTS_PER_WINDOW = 30;
 const CRISIS_COOLDOWN_MS = 5 * 60_000;
 const OPENAI_MAX_TOKENS = 500;
 const OPENAI_TEMPERATURE = 0.7;
+const CONVERSATION_HISTORY_LIMIT = 10;
 
 function filterUnsafeContent(text: string): { safe: boolean; filtered: string } {
   for (const pattern of UNSAFE_PATTERNS) {
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
     const isCrisis = detectCrisis(content);
 
     // Build conversation history for OpenAI
-    const conversationHistory = chat.messages.slice(-10).map((m: { role: string; content: string }) => ({
+    const conversationHistory = chat.messages.slice(-CONVERSATION_HISTORY_LIMIT).map((m: { role: string; content: string }) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
